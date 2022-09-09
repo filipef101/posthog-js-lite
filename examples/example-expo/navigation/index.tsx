@@ -22,7 +22,7 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
     <NavigationContainer linking={LinkingConfiguration} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       {/* IMPORTANT - PostHogProvider must be a child of the NavigationContainer but a parent of everything else */}
       <PostHogProvider
-        apiKey="phc_5iOxj8RHWGoInKcXKmbqMBPCm0fqFlWEnbS2R97bqQB"
+        apiKey="phc_SyUYly0YVIXqinqQkLnSrtBjOYM53jg6dvQPEXaBKoo"
         options={{
           host: 'http://localhost:8000',
           flushAt: 10,

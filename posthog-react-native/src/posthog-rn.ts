@@ -31,6 +31,13 @@ export class PostHog extends PostHogCore {
     super(apiKey, options)
     this._persistence = options?.persistence
 
+    if (Platform.OS === 'web') {
+      // TODO: Improve this notice
+      console.warn(
+        'PostHog React Native is not fully supported on Web. If you need it on web as well it is best to use the dedicated `posthog-js` library and select the implementation based on `Platform.OS === "web"`'
+      )
+    }
+
     AppState.addEventListener('change', () => {
       this.flush()
     })

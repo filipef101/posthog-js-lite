@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system'
+import { Platform } from 'react-native'
 
 const POSTHOG_STORAGE_KEY = '.posthog-rn.json'
 const POSTHOG_STORAGE_VERSION = 'v1'
@@ -8,6 +9,10 @@ type PostHogStorageContents = { [key: string]: any }
 const loadStorageAsync = async (): Promise<PostHogStorageContents> => {
   const uri = FileSystem.documentDirectory + POSTHOG_STORAGE_KEY
   // If we change POSTHOG_STORAGE_VERSION then we should migrate the persisted data here
+
+  if (Platform.OS === 'web') {
+    return {}
+  }
   try {
     const stringContent = await FileSystem.readAsStringAsync(uri)
     return JSON.parse(stringContent).content
@@ -21,6 +26,10 @@ const persitStorageAsync = async (content: PostHogStorageContents): Promise<void
   const data = {
     version: POSTHOG_STORAGE_VERSION,
     content,
+  }
+
+  if (Platform.OS === 'web') {
+    return
   }
 
   await FileSystem.writeAsStringAsync(uri, JSON.stringify(data)).catch((e) => {

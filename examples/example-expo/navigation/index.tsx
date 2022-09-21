@@ -19,20 +19,22 @@ import PosthogDemoScreen from '../screens/PosthogDemoScreen'
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
-    <NavigationContainer linking={LinkingConfiguration} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      {/* IMPORTANT - PostHogProvider must be a child of the NavigationContainer but a parent of everything else */}
-      <PostHogProvider
-        apiKey="phc_5iOxj8RHWGoInKcXKmbqMBPCm0fqFlWEnbS2R97bqQB"
-        options={{
-          host: 'http://localhost:8000',
-          flushAt: 10,
-          flushInterval: 1000, // This is far to low for production but helpful for local testing
-        }}
-        autocapture
-      >
+    <PostHogProvider
+      apiKey="phc_5iOxj8RHWGoInKcXKmbqMBPCm0fqFlWEnbS2R97bqQB"
+      options={{
+        host: 'http://localhost:8000',
+        flushAt: 10,
+        flushInterval: 1000, // This is far to low for production but helpful for local testing
+      }}
+      autocapture={{
+        captureScreens: false,
+      }}
+    >
+      <NavigationContainer linking={LinkingConfiguration} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        {/* IMPORTANT - PostHogProvider must be a child of the NavigationContainer but a parent of everything else */}
         <RootNavigator />
-      </PostHogProvider>
-    </NavigationContainer>
+      </NavigationContainer>
+    </PostHogProvider>
   )
 }
 

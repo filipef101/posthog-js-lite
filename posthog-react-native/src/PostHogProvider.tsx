@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { GestureResponderEvent, StyleProp, View, ViewStyle } from 'react-native'
 import { PostHog, PostHogOptions } from './posthog-rn'
 import { autocaptureFromTouchEvent } from './autocapture'
@@ -6,6 +6,8 @@ import { useNavigationTracker } from './hooks/useNavigationTracker'
 import { useLifecycleTracker } from './hooks/useLifecycleTracker'
 import { PostHogContext } from './PosthogContext'
 import { PostHogAutocaptureOptions } from './types'
+import ViewShot, { captureRef } from 'react-native-view-shot'
+import { createFullSnapshotEvent, createInitialSnapshotEvent } from './session-recordings'
 
 export interface PostHogProviderProps {
   children: React.ReactNode
@@ -35,6 +37,8 @@ export const PostHogProvider = ({
   style,
 }: PostHogProviderProps): JSX.Element => {
   const posthogRef = useRef<PostHog>()
+  const viewshotRef = useRef<ViewShot>()
+  const sessionIdRef = useRef<string>('UUID')
 
   if (!posthogRef.current) {
     posthogRef.current = client ? client : apiKey ? new PostHog(apiKey, options) : undefined
@@ -61,19 +65,48 @@ export const PostHogProvider = ({
     [posthog, autocapture]
   )
 
+  // Session Recording EXPERIMENTAL
+
+  useEffect(() => {
+    let previousData: string = ''
+
+    posthog?.resetSessionId()
+    posthog?.snapshot({ $snapshot_data: createInitialSnapshotEvent() })
+
+    const interval = setInterval(() => {
+      captureRef(viewshotRef, {
+        result: 'data-uri',
+        format: 'png',
+      }).then((data) => {
+        if (data === previousData) {
+          previousData = data
+          return
+        }
+
+        previousData = data
+
+        posthog?.snapshot({ $snapshot_data: createFullSnapshotEvent(data) })
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  })
+
   return (
-    <View
-      ph-label="PostHogProvider"
-      style={style || { flex: 1 }}
-      onTouchEndCapture={captureTouches ? (e) => onTouch('end', e) : undefined}
-    >
-      <PostHogContext.Provider value={{ client: posthogRef.current }}>
-        <>
-          {captureScreens ? <PostHogNavigationHook options={autocaptureOptions} /> : null}
-          {captureLifecycle ? <PostHogLifecycleHook /> : null}
-        </>
-        {children}
-      </PostHogContext.Provider>
-    </View>
+    <ViewShot ref={viewshotRef as any} style={{ flex: 1 }}>
+      <View
+        ph-label="PostHogProvider"
+        style={style || { flex: 1 }}
+        onTouchEndCapture={captureTouches ? (e) => onTouch('end', e) : undefined}
+      >
+        <PostHogContext.Provider value={{ client: posthogRef.current }}>
+          <>
+            {captureScreens ? <PostHogNavigationHook options={autocaptureOptions} /> : null}
+            {captureLifecycle ? <PostHogLifecycleHook /> : null}
+          </>
+          {children}
+        </PostHogContext.Provider>
+      </View>
+    </ViewShot>
   )
 }

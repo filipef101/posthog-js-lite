@@ -105,6 +105,13 @@ export class PostHog extends PostHogCore {
       $screen_name: name,
     })
   }
+
+  snapshot(properties?: any): this {
+    this.debug()
+    return this.capture('$snapshot', {
+      ...properties,
+    })
+  }
 }
 
 // NOTE: This ensures that we have the AsyncStorage loaded into memory hopefully before PostHog

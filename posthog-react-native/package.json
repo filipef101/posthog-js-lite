@@ -22,14 +22,16 @@
     "expo-localization": "~11.0.0",
     "jest-expo": "^46.0.1",
     "react": "^18.2.0",
-    "react-native": "^0.69.1"
+    "react-native": "^0.69.1",
+    "react-native-view-shot": "^3.4.0"
   },
   "peerDependencies": {
     "@react-navigation/native": ">= 5.0.10",
     "expo-application": ">= 4.0.0",
     "expo-device": ">= 4.0.0",
     "expo-file-system": ">= 13.0.0",
-    "expo-localization": ">= 11.0.0"
+    "expo-localization": ">= 11.0.0",
+    "react-native-view-shot": ">= 3.3.0"
   },
   "peerDependenciesMeta": {
     "@react-navigation/native": {

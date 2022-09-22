@@ -7,7 +7,14 @@ import { useLifecycleTracker } from './hooks/useLifecycleTracker'
 import { PostHogContext } from './PosthogContext'
 import { PostHogAutocaptureOptions } from './types'
 import ViewShot, { captureRef } from 'react-native-view-shot'
-import { createFullSnapshotEvent, createInitialSnapshotEvent } from './session-recordings'
+import {
+  createFullSnapshotEvent,
+  createInitialSnapshotEvent,
+  createTouchEndSnapshotEvent,
+  createTouchMoveSnapshotEvent,
+  createTouchStartSnapshotEvent,
+} from './session-recordings'
+import { generateUUID } from 'posthog-core/src/utils'
 
 export interface PostHogProviderProps {
   children: React.ReactNode
@@ -38,7 +45,9 @@ export const PostHogProvider = ({
 }: PostHogProviderProps): JSX.Element => {
   const posthogRef = useRef<PostHog>()
   const viewshotRef = useRef<ViewShot>()
-  const sessionIdRef = useRef<string>('UUID')
+  const windowIdRef = useRef<string>(generateUUID())
+  const touchTimeBaseline = useRef<number>(0)
+  const touchPositions = useRef<any[]>([])
 
   if (!posthogRef.current) {
     posthogRef.current = client ? client : apiKey ? new PostHog(apiKey, options) : undefined
@@ -51,15 +60,50 @@ export const PostHogProvider = ({
   const captureScreens = posthog && (autocapture === true || (autocaptureOptions?.captureScreens ?? true)) // Default to true if not set
   const captureLifecycle = posthog && (autocapture === true || (autocaptureOptions?.captureLifecycleEvents ?? true)) // Default to true if not set
 
+  const onTouchEnd = (): void => {
+    const totalOffset = Date.now() - touchTimeBaseline.current
+
+    const positions = touchPositions.current.map((p) => {
+      p.timeOffset -= totalOffset
+      return p
+    })
+
+    posthog?.snapshot({ $snapshot_data: createTouchMoveSnapshotEvent(positions) })
+    console.log(JSON.stringify(createTouchMoveSnapshotEvent(positions), null, 2))
+
+    touchPositions.current = []
+    touchTimeBaseline.current = 0
+  }
+
   const onTouch = useCallback(
     (type: 'start' | 'move' | 'end', e: GestureResponderEvent) => {
       // TODO: Improve this to ensure we only capture presses and not just ends of a drag for example
+
+      console.log(type, e.nativeEvent.pageX, e.nativeEvent.pageY)
       if (!captureTouches) {
         return
       }
 
+      // TODO: Handle multi touches
+      if (type === 'start') {
+        touchTimeBaseline.current = Date.now()
+        posthog?.snapshot({
+          $snapshot_data: createTouchStartSnapshotEvent(e.nativeEvent.pageX, e.nativeEvent.pageY),
+        })
+      }
+
+      touchPositions.current.push({
+        x: e.nativeEvent.pageX,
+        y: e.nativeEvent.pageY,
+        timeOffset: Date.now() - touchTimeBaseline.current,
+      })
+
       if (type === 'end') {
+        onTouchEnd()
         autocaptureFromTouchEvent(e, posthog, autocaptureOptions)
+        posthog?.snapshot({
+          $snapshot_data: createTouchEndSnapshotEvent(e.nativeEvent.pageX, e.nativeEvent.pageY),
+        })
       }
     },
     [posthog, autocapture]
@@ -71,6 +115,7 @@ export const PostHogProvider = ({
     let previousData: string = ''
 
     posthog?.resetSessionId()
+    posthog?.register({ $window_id: windowIdRef.current })
     posthog?.snapshot({ $snapshot_data: createInitialSnapshotEvent() })
 
     const interval = setInterval(() => {
@@ -97,6 +142,8 @@ export const PostHogProvider = ({
       <View
         ph-label="PostHogProvider"
         style={style || { flex: 1 }}
+        onTouchStart={captureTouches ? (e) => onTouch('start', e) : undefined}
+        onTouchMove={captureTouches ? (e) => onTouch('move', e) : undefined}
         onTouchEndCapture={captureTouches ? (e) => onTouch('end', e) : undefined}
       >
         <PostHogContext.Provider value={{ client: posthogRef.current }}>

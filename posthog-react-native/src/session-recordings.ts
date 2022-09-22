@@ -42,8 +42,9 @@ export const createFullSnapshotEvent = (base64Image: string): any => {
                 type: 2,
                 tagName: 'body',
                 attributes: {
-                  style: `background-image: url("${base64Image}");`,
+                  style: `background-image: url("${base64Image}"); background-size: cover;`,
                 },
+                childNodes: [],
                 id: 4,
               },
             ],
@@ -58,6 +59,51 @@ export const createFullSnapshotEvent = (base64Image: string): any => {
       },
     },
     timestamp: Date.now(),
+  }
+}
+
+export const createTouchStartSnapshotEvent = (x: number, y: number): any => {
+  return {
+    type: 3, // IncrementalSnapshot
+    data: {
+      source: 2, // MouseInteraction
+      type: 7, // TouchStart
+      id: 4, // Links to the body
+      x: x,
+      y: y,
+    },
+    timestamp: Date.now(),
+  }
+}
+
+export const createTouchEndSnapshotEvent = (x: number, y: number): any => {
+  return {
+    type: 3, // IncrementalSnapshot
+    data: {
+      source: 2, // MouseInteraction
+      type: 9, // TouchEnd
+      id: 4, // Links to the body
+      x: x,
+      y: y,
+    },
+    timestamp: Date.now(),
+  }
+}
+
+export const createTouchMoveSnapshotEvent = (positions: any[]): any => {
+  return {
+    type: 3, // IncrementalSnapshot
+    data: {
+      // source: 1, // MouseMove
+      source: 6, // TouchMove
+      positions: positions.map((x) => ({
+        x: x.x,
+        y: x.y,
+        id: 4, // Links to the body
+        timeOffset: x.timeOffset,
+      })),
+    },
+    timestamp: 1663759285064,
   }
 }
 

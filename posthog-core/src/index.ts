@@ -36,6 +36,7 @@ export abstract class PostHogCore {
   // internal
   protected _events = new SimpleEventEmitter()
   protected _flushTimer?: any
+  protected _flushPromise?: Promise<any>
   protected _decideResponsePromise?: Promise<PostHogDecideResponse>
   protected _retryOptions: RetriableOptions
   protected _sessionExpirationTimeSeconds: number
@@ -590,6 +591,11 @@ export abstract class PostHogCore {
   }
 
   flush(callback?: (err?: any, data?: any) => void): void {
+    if (this._flushPromise) {
+      // If we are already flushing then wait for that to finish
+      return
+    }
+
     if (this.optedOut) {
       return callback?.()
     }
@@ -617,8 +623,8 @@ export abstract class PostHogCore {
     }
 
     const done = (err?: any): void => {
-      callback?.(err, messages)
       this._events.emit('flush', messages)
+      callback?.(err, messages)
     }
 
     // Don't set the user agent if we're not on a browser. The latest spec allows
@@ -653,7 +659,7 @@ export abstract class PostHogCore {
             body: payload,
           }
 
-    this.fetchWithRetry(url, fetchOptions)
+    this._flushPromise = this.fetchWithRetry(url, fetchOptions)
       .then(() => done())
       .catch((err) => {
         if (err.response) {
@@ -662,6 +668,9 @@ export abstract class PostHogCore {
         }
 
         done(err)
+      })
+      .finally(() => {
+        this._flushPromise = undefined
       })
   }
 
@@ -674,8 +683,19 @@ export abstract class PostHogCore {
   }
 
   async shutdownAsync(): Promise<void> {
+    this._events.emit('Shutdown: started', undefined)
     clearTimeout(this._flushTimer)
+    const oldFlushAt = this.flushAt
+    this.flushAt = Infinity
+
+    if (this._flushPromise) {
+      this._events.emit('Shutdown: waiting for existing flush...', undefined)
+      await this._flushPromise
+    }
+    this._events.emit('Shutdown: flushing remaining events...', undefined)
     await this.flushAsync()
+    this._events.emit('Shutdown: done', undefined)
+    this.flushAt = oldFlushAt
   }
 
   shutdown(): void {

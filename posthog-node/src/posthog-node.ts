@@ -286,6 +286,10 @@ export class PostHog implements PostHogNodeV1 {
     this._sharedClient.flush()
   }
 
+  flushAsync(): Promise<any> {
+    return this._sharedClient.flushAsync()
+  }
+
   shutdown(): void {
     void this.shutdownAsync()
   }

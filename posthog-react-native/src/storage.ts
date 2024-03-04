@@ -6,11 +6,11 @@ const POSTHOG_STORAGE_VERSION = 'v1'
 
 type PostHogStorageContents = { [key: string]: any }
 
-export class PostHogRNStorage {
+export class PostHogRNStorage implements PostHogNativeStorage {
   memoryCache: PostHogStorageContents = {}
-  storage: PostHogCustomStorage
+  storage: NativeAsyncStorageProvider
   preloadPromise: Promise<void> | undefined
-
+  
   constructor(storage: PostHogCustomStorage) {
     this.storage = storage
 
@@ -55,9 +55,7 @@ export class PostHogRNStorage {
     }
     this.persist()
   }
-  getAllKeys(): readonly string[] {
-    return Object.keys(this.memoryCache)
-  }
+
 
   populateMemoryCache(res: string | null): void {
     try {

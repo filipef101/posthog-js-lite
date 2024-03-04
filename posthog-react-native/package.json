@@ -32,7 +32,8 @@
     "react": "^18.2.0",
     "react-native": "^0.69.1",
     "react-native-device-info": "^10.3.0",
-    "react-native-navigation": "^6.0.0"
+    "react-native-navigation": "^6.0.0",
+    "react-native-mmkv":"^2.12.1"
   },
   "peerDependencies": {
     "@react-native-async-storage/async-storage": ">=1.0.0",
@@ -42,9 +43,13 @@
     "expo-file-system": ">= 13.0.0",
     "expo-localization": ">= 11.0.0",
     "react-native-device-info": ">= 10.0.0",
-    "react-native-navigation": ">=6.0.0"
+    "react-native-navigation": ">=6.0.0",
+    "react-native-mmkv":">=2.0.0"
   },
   "peerDependenciesMeta": {
+    "react-native-mmkv": {
+      "optional": true
+    },
     "@react-native-async-storage/async-storage": {
       "optional": true
     },

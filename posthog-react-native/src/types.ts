@@ -47,7 +47,11 @@ export interface PostHogCustomAppProperties {
   $timezone?: string | null
 }
 
-export interface PostHogCustomStorage {
+export interface PostHogAsyncStorageProvider {
   getItem: (key: string) => string | null | Promise<string | null>
   setItem: (key: string, value: string) => void | Promise<void>
+}
+
+export interface PostHogNativeStorage extends PostHogStorage  {
+  preloadPromise: Promise<void> | undefined
 }

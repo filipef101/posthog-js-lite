@@ -115,3 +115,10 @@ export type PostHogFlagsAndPayloadsResponse = {
 }
 
 export type JsonType = string | number | boolean | null | { [key: string]: JsonType } | Array<JsonType>
+
+export type PostHogStorage = {
+  getItem: (key: string) => string | null | undefined
+  setItem: (key: string, value: string) => void
+  removeItem: (key: string) => void
+  clear: () => void
+}
